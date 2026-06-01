@@ -59,7 +59,8 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="orders"
     )
 
     class Meta:
@@ -68,16 +69,32 @@ class Order(models.Model):
             models.Index(fields=["-created_at"]),
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.pk and self.created_at:
+            field = self._meta.get_field("created_at")
+            field.auto_now_add = False
+            try:
+                super().save(*args, **kwargs)
+            finally:
+                field.auto_now_add = True
+        else:
+            super().save(*args, **kwargs)
+
     def __str__(self) -> str:
-        return f"{self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"<Order: {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}>"
 
 
 class Ticket(models.Model):
     movie_session = models.ForeignKey(
         to="MovieSession",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="tickets"
     )
-    order = models.ForeignKey(to=Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(
+        to=Order,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
     row = models.IntegerField()
     seat = models.IntegerField()
 
@@ -102,10 +119,12 @@ class Ticket(models.Model):
     def __str__(self) -> str:
         movie = self.movie_session.movie.title
         time = self.movie_session.show_time
-        return (f"{movie}"
+        return (f"<Ticket:"
+                f" {movie}"
                 f" {time.strftime('%Y-%m-%d %H:%M:%S')}"
                 f" (row: {self.row},"
-                f" seat: {self.seat})")
+                f" seat: {self.seat})>"
+                )
 
     def save(self, *args, **kwargs) -> None:
         self.full_clean()
