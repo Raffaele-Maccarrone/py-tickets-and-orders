@@ -69,7 +69,7 @@ class Order(models.Model):
             models.Index(fields=["-created_at"]),
         ]
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if not self.pk and self.created_at:
             field = self._meta.get_field("created_at")
             field.auto_now_add = False
