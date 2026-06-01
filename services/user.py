@@ -17,7 +17,7 @@ def create_user(
         optional_fields["first_name"] = first_name
     if last_name:
         optional_fields["last_name"] = last_name
-    user = User.objects.create_user(
+    user = get_user_model().objects.create_user(
         username=username,
         password=password,
         **optional_fields
